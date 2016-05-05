@@ -1,0 +1,7 @@
+*.hs
+*.hid
+*.txt
+*.bak
+*.x
+*.y
+Makefile
