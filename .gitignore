@@ -4,4 +4,7 @@
 *.bak
 *.x
 *.y
+*.hi
+*.o
+*.exe
 Makefile
