@@ -1,0 +1,54 @@
+Prog.   Program  ::= [Code] ;
+FCode.  Code     ::= Function ;
+SCode.  Code     ::= Stm ;
+Fun.    Function ::= Type MyIdent "(" [Decl] ")" "{" [Stm] "}" ;
+Dec.    Decl     ::= Type [MyIdent] ;
+
+terminator Code "" ;
+terminator Stm "" ;
+separator  Decl "," ;
+separator  nonempty MyIdent "," ;
+separator  Exp "," ;
+
+SDecl.   Stm ::= Decl ";" ;
+SExp.    Stm ::= Exp ";" ;
+SBlock.  Stm ::= "{" [Stm] "}" ;
+SWhile.  Stm ::= "while" "(" Exp ")" Stm ;
+SReturn. Stm ::= "return" Exp  ";" ;
+SIf.     Stm ::= "if" "(" Exp ")" Stm ;
+SIfElse. Stm ::= "if" "(" Exp ")" Stm "else" Stm ;
+SFor.    Stm ::= "for" "(" Exp ";" Exp ";" Exp ")" Stm ;
+
+EAss.    Exp  ::= MyIdent AssignOp Exp ;
+ELt.     Exp1 ::= Exp2 "<" Exp2 ;
+EGt.     Exp1 ::= Exp2 ">" Exp2 ;
+ELe.     Exp1 ::= Exp2 "<=" Exp2 ;
+EGe.     Exp1 ::= Exp2 ">=" Exp2 ;
+EEq.     Exp1 ::= Exp2 "==" Exp2 ;
+ENeq.    Exp1 ::= Exp2 "!=" Exp2 ;
+EAdd.    Exp2 ::= Exp2 "+" Exp3 ;
+ESub.    Exp2 ::= Exp2 "-" Exp3 ;
+EMul.    Exp3 ::= Exp3 "*" Exp4 ;
+EDiv.    Exp3 ::= Exp3 "/" Exp4 ;
+EInc.    Exp4 ::= "^" Exp4 ;
+EDec.    Exp4 ::= "v" Exp4 ;
+ENeg.    Exp4 ::= "!" Exp4 ;
+EPreIn.  Exp5 ::= "++" MyIdent;
+EPreDe.  Exp5 ::= "--" MyIdent;
+EPstIn.  Exp5 ::= MyIdent "++";
+EPstDe.  Exp5 ::= MyIdent "--";
+Call.    Exp6 ::= MyIdent "(" [Exp] ")" ;
+EVar.    Exp7 ::= MyIdent ;
+
+coercions Exp 7 ;
+
+Assign.       AssignOp ::= "=" ;
+AssignAdd.    AssignOp ::= "+=" ;
+AssignSubt.   AssignOp ::= "-=" ;
+AssignMult.   AssignOp ::= "*=" ;
+AssignDiv.    AssignOp ::= "/=" ;
+
+TInt.    Type ::= "int" ;
+TBool.   Type ::= "bool" ;
+
+token MyIdent ["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwxyz0123456789_"] + ;

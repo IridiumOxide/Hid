@@ -1,0 +1,16 @@
+Język hid
+
+Język hid (hidden / hideous) jest językiem imperatywnym opartym na C z ciekawą własnością: nie ma w nim literałów.
+Wartości liczbowe w momencie deklaracji przyjmują wartość zero, a język posiada instrukcje '^ [wyrażenie]' (zwraca następnika wartości wyrażenia) i 'v [wyrażenie]' (zwraca poprzednika wartości wyrażenia).
+Podobnie wartości logiczne w momencie deklaracji mają wartość fałszu i można je negować.
+Takie podejście pozwala nam na zwolnienie przestrzeni nazw - identyfikatory mogą zaczynać się od liczb, lub nawet składać się z samych liczb.
+Oprócz tej wygody programowanie w tym języku stanowi ciekawe ćwiczenie dla programisty i pokazuje, że literały nie są nam tak naprawdę potrzebne w codziennym życiu, a oprócz tego zniechęca do używania "Magicznych Liczb" w kodzie.
+Warto zauważyć, że z uwagi na operator poprzednika ('v') identyfikatory nie mogą zawierać małej litery v.
+
+Język posiada dwa typy wyrażeń: int, bool. Dostępna jest standardowa arytmetyka i porównania.
+Jest wyrażenie warunkowe if else, są pętle while i for. Można deklarować funkcje i wywoływać je, także rekurencyjnie.
+Język posiada wbudowaną funkcję print pozwalająca na wypisanie wartości jakiejś zmiennej.
+Dostępne są operatory przypisania w stylu C (+=, *=, ++)
+(czyli wymagania na 16pkt)
+
+Program w języku hid jest listą funkcji i wyrażeń (statement).
