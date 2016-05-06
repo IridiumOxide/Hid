@@ -1,3 +1,6 @@
+comment "/*" "*/" ;
+comment "//";
+
 Prog.   Program  ::= [Code] ;
 FCode.  Code     ::= Function ;
 SCode.  Code     ::= Stm ;
@@ -32,6 +35,7 @@ EMul.    Exp3 ::= Exp3 "*" Exp4 ;
 EDiv.    Exp3 ::= Exp3 "/" Exp4 ;
 EInc.    Exp4 ::= "^" Exp4 ;
 EDec.    Exp4 ::= "v" Exp4 ;
+EUmin.   Exp4 ::= "-" Exp4 ;
 ENeg.    Exp4 ::= "!" Exp4 ;
 EPreIn.  Exp5 ::= "++" MyIdent;
 EPreDe.  Exp5 ::= "--" MyIdent;
