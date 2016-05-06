@@ -8,3 +8,4 @@
 *.o
 *.exe
 Makefile
+!Hid.hs
