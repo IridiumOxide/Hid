@@ -6,7 +6,7 @@ int fibonacci (int x)
     return 1;
   }
   else{
-    return fibonacci (v 2) + fibonacci (v v 3);
+    return fibonacci (v x) + fibonacci (v v x);
   }
 }
 
