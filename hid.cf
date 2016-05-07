@@ -21,7 +21,7 @@ SReturn. Stm ::= "return" Exp  ";" ;
 SIf.     Stm ::= "if" "(" Exp ")" Stm ;
 SIfElse. Stm ::= "if" "(" Exp ")" Stm "else" Stm ;
 SFor.    Stm ::= "for" "(" Exp ";" Exp ";" Exp ")" Stm ;
-SPrt.    Stm ::= "print" "(" Exp ")";
+SPrt.    Stm ::= "print" "(" Exp ")" ";";
 
 EAss.    Exp  ::= MyIdent AssignOp Exp ;
 ELt.     Exp1 ::= Exp2 "<" Exp2 ;
