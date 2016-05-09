@@ -78,6 +78,7 @@ transMyIdent x = case x of
 transProgram :: Program -> Result ()
 transProgram x = case x of
   Prog codes -> do
+    tell (["This program is totally being interpreted now, trust me"])
     return ()
 transCode :: Code -> Result Value
 transCode x = case x of
@@ -138,12 +139,37 @@ transExp x = case x of
   ENeg exp -> do
     v <- transExp exp
     return (ValGeorge (let ValGeorge b = v in not b))
-  EPreIn myident -> failure x
-  EPreDe myident -> failure x
-  EPstIn myident -> failure x
-  EPstDe myident -> failure x
+  EPreIn myident -> do
+    mid <- transMyIdent myident
+    idloc <- getLoc mid
+    cval <- getVal idloc
+    nval <- let ValInt xcval = cval in (setVal idloc (ValInt (xcval + 1)))
+    return nval
+  EPreDe myident -> do
+    mid <- transMyIdent myident
+    idloc <- getLoc mid
+    cval <- getVal idloc
+    nval <- let ValInt xcval = cval in (setVal idloc (ValInt (xcval - 1)))
+    return nval
+  EPstIn myident -> do
+    mid <- transMyIdent myident
+    idloc <- getLoc mid
+    cval <- getVal idloc
+    nval <- let ValInt xcval = cval in (setVal idloc (ValInt (xcval + 1)))
+    return cval
+  EPstDe myident -> do
+    mid <- transMyIdent myident
+    idloc <- getLoc mid
+    cval <- getVal idloc
+    nval <- let ValInt xcval = cval in (setVal idloc (ValInt (xcval - 1)))
+    return cval
+  -- TODO (functions)!!!!!!!!!!
   Call myident exps -> failure x
-  EVar myident -> failure x
+  EVar myident -> do
+    mid <- transMyIdent myident
+    idloc <- getLoc mid
+    cval <- getVal idloc
+    return cval
 transArithAssignOp :: ArithAssignOp -> Result (Integer -> Integer -> Integer)
 transArithAssignOp x = case x of
   AssignAdd ->  return (+)
@@ -152,5 +178,7 @@ transArithAssignOp x = case x of
   AssignDiv ->  return (div)
 transType :: Type -> Result Value
 transType x = case x of
-  TInt -> failure x
-  TBool -> failure x
+  TInt -> do
+    return (ValInt 0)
+  TBool -> do
+    return (ValGeorge False)
