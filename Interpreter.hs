@@ -8,23 +8,49 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Writer
-import Data.Map
+import qualified Data.Map as Map
 
 data Value = ValInt Integer | ValGeorge Bool deriving (Show, Eq, Ord)
 type Var = String
 type Loc = Integer
 
-data EnvThing = Loc Loc deriving Show
-type Env = Map Var EnvThing
-type Store = Map Loc Value
+type Env = Map.Map Var Loc
+type Store = Map.Map Loc Value
 data MyState = MyState {env :: Env, store :: Store} deriving Show
 
 type MyMonad = ExceptT String (WriterT [String] (State MyState))
 
 type Result = MyMonad
 
+emptyEnv :: Env
+emptyEnv = Map.empty
+
+emptyStore :: Store
+emptyStore = Map.empty
+
 emptyMyState :: MyState
-emptyMyState = MyState {env = empty, store = empty}
+emptyMyState = MyState {env = emptyEnv, store = emptyStore}
+
+getLoc :: Var -> Result Loc
+getLoc x = do
+  cenv <- gets env
+  case Map.lookup x cenv of
+    Just n -> return n
+    Nothing -> throwError (x ++ " undeclared")
+
+getVal :: Loc -> Result Value
+getVal x = do
+  cstore <- gets store
+  case Map.lookup x cstore of
+    Just v -> return v
+    Nothing -> throwError ("A variable somehow has no value")
+
+setVal :: Loc -> Value -> Result Value
+setVal x v = do
+  cstore <- gets store
+  cenv <- gets env
+  put (MyState cenv (Map.insert x v cstore))
+  return v
 
 applyBoolOperator :: Exp -> Exp -> (Value -> Value -> Bool) -> Result Value
 applyBoolOperator exp1 exp2 f = do
@@ -43,9 +69,12 @@ failure x = do
   throwError "Not implemented!"
   return (ValInt 0)
 
-transMyIdent :: MyIdent -> Result Value
+transMyIdent :: MyIdent -> Result String
 transMyIdent x = case x of
-  MyIdent string -> failure x
+  MyIdent string -> do
+    return string
+
+-- TODO!!!!!!!!!
 transProgram :: Program -> Result ()
 transProgram x = case x of
   Prog codes -> do
@@ -73,7 +102,20 @@ transStm x = case x of
   SPrt exp -> failure x
 transExp :: Exp -> Result Value
 transExp x = case x of
-  EAss myident assignop exp -> failure x
+  EAss myident exp -> do
+    mid <- transMyIdent myident
+    idloc <- getLoc mid
+    ev <- transExp exp
+    sv <- setVal idloc ev
+    return sv
+  EArAss myident arithassignop exp -> do
+    mid <- transMyIdent myident
+    idloc <- getLoc mid
+    ev <- transExp exp
+    aop <- transArithAssignOp arithassignop
+    cval <- getVal idloc
+    sv <- let {ValInt xcval = cval; ValInt xev = ev} in (let nval = (aop xcval xev) in setVal idloc (ValInt nval))
+    return sv
   ELt exp1 exp2 -> applyBoolOperator exp1 exp2 (<)
   EGt exp1 exp2 -> applyBoolOperator exp1 exp2 (>)
   ELe exp1 exp2 -> applyBoolOperator exp1 exp2 (<=)
@@ -102,13 +144,12 @@ transExp x = case x of
   EPstDe myident -> failure x
   Call myident exps -> failure x
   EVar myident -> failure x
-transAssignOp :: AssignOp -> Result Value
-transAssignOp x = case x of
-  Assign -> failure x
-  AssignAdd -> failure x
-  AssignSubt -> failure x
-  AssignMult -> failure x
-  AssignDiv -> failure x
+transArithAssignOp :: ArithAssignOp -> Result (Integer -> Integer -> Integer)
+transArithAssignOp x = case x of
+  AssignAdd ->  return (+)
+  AssignSubt -> return (-)
+  AssignMult -> return (*)
+  AssignDiv ->  return (div)
 transType :: Type -> Result Value
 transType x = case x of
   TInt -> failure x
