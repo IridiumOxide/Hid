@@ -80,16 +80,20 @@ transProgram x = case x of
   Prog codes -> do
     tell (["This program is totally being interpreted now, trust me"])
     return ()
+
 transCode :: Code -> Result Value
 transCode x = case x of
   FCode function -> failure x
   SCode stm -> failure x
+
 transFunction :: Function -> Result Value
 transFunction x = case x of
   Fun type_ myident decls stms -> failure x
+
 transDecl :: Decl -> Result Value
 transDecl x = case x of
   Dec type_ myidents -> failure x
+
 transStm :: Stm -> Result Value
 transStm x = case x of
   SDecl decl -> failure x
@@ -101,6 +105,7 @@ transStm x = case x of
   SIfElse exp stm1 stm2 -> failure x
   SFor exp1 exp2 exp3 stm -> failure x
   SPrt exp -> failure x
+
 transExp :: Exp -> Result Value
 transExp x = case x of
   EAss myident exp -> do
@@ -170,12 +175,14 @@ transExp x = case x of
     idloc <- getLoc mid
     cval <- getVal idloc
     return cval
+
 transArithAssignOp :: ArithAssignOp -> Result (Integer -> Integer -> Integer)
 transArithAssignOp x = case x of
   AssignAdd ->  return (+)
   AssignSubt -> return (-)
   AssignMult -> return (*)
   AssignDiv ->  return (div)
+
 transType :: Type -> Result Value
 transType x = case x of
   TInt -> do
