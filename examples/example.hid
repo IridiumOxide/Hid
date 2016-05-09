@@ -1,12 +1,12 @@
 int fibonacci (int x)
 {
   int 1;
-  1 = ^ 1;
+  1 = ^1;
   if (x <= 1){
     return 1;
   }
   else{
-    return fibonacci (v x) + fibonacci (v v x);
+    return fibonacci (vx) + fibonacci (vvx);
   }
 }
 
