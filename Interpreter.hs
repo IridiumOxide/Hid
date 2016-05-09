@@ -31,6 +31,14 @@ emptyStore = Map.empty
 emptyMyState :: MyState
 emptyMyState = MyState {env = emptyEnv, store = emptyStore}
 
+
+newLoc :: Var -> Result Loc
+newLoc x = do
+  cenv <- gets env
+  case Map.lookup x cenv of
+    Just n -> return n
+    Nothing -> if null cenv then return 0 else return ((snd (Map.findMax cenv)) + 1)
+
 getLoc :: Var -> Result Loc
 getLoc x = do
   cenv <- gets env
@@ -69,6 +77,11 @@ failure x = do
   throwError "Not implemented!"
   return (ValInt 0)
 
+failureN :: a -> Result ()
+failureN x = do
+  throwError "Not implemented!"
+  return ()
+
 transMyIdent :: MyIdent -> Result String
 transMyIdent x = case x of
   MyIdent string -> do
@@ -81,30 +94,43 @@ transProgram x = case x of
     tell (["This program is totally being interpreted now, trust me"])
     return ()
 
+-- TODO!!!!
 transCode :: Code -> Result Value
 transCode x = case x of
   FCode function -> failure x
   SCode stm -> failure x
 
+-- TODO!!!!
 transFunction :: Function -> Result Value
 transFunction x = case x of
   Fun type_ myident decls stms -> failure x
 
-transDecl :: Decl -> Result Value
+-- TODO!!!!
+transDecl :: Decl -> Result ()
 transDecl x = case x of
-  Dec type_ myidents -> failure x
+  Dec type_ (firstident:myidents) -> do
+    nval <- transType type_
+    mid <- transMyIdent firstident
+    idloc <- newLoc mid
+    setVal idloc nval
+    transDecl (Dec type_ myidents)
+  Dec type_ [] -> do
+    return ()
 
-transStm :: Stm -> Result Value
+-- TODO!!!!
+transStm :: Stm -> Result ()
 transStm x = case x of
-  SDecl decl -> failure x
-  SExp exp -> failure x
-  SBlock stms -> failure x
-  SWhile exp stm -> failure x
-  SReturn exp -> failure x
-  SIf exp stm -> failure x
-  SIfElse exp stm1 stm2 -> failure x
-  SFor exp1 exp2 exp3 stm -> failure x
-  SPrt exp -> failure x
+  SDecl decl -> transDecl decl
+  SExp exp -> do
+    transExp exp
+    return ()
+  SBlock stms -> failureN x
+  SWhile exp stm -> failureN x
+  SReturn exp -> failureN x
+  SIf exp stm -> failureN x
+  SIfElse exp stm1 stm2 -> failureN x
+  SFor exp1 exp2 exp3 stm -> failureN x
+  SPrt exp -> failureN x
 
 transExp :: Exp -> Result Value
 transExp x = case x of
