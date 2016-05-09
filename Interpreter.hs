@@ -35,9 +35,16 @@ emptyMyState = MyState {env = emptyEnv, store = emptyStore}
 newLoc :: Var -> Result Loc
 newLoc x = do
   cenv <- gets env
+  cstore <- gets store
   case Map.lookup x cenv of
     Just n -> return n
-    Nothing -> if null cenv then return 0 else return ((snd (Map.findMax cenv)) + 1)
+    Nothing -> if null cstore then return 0 else return ((fst (Map.findMax cstore)) + 1)
+
+addName :: Var -> Loc -> Result ()
+addName x l = do
+  cenv <- gets env
+  cstore <- gets store
+  put (MyState (Map.insert x l cenv) cstore)
 
 getLoc :: Var -> Result Loc
 getLoc x = do
@@ -82,37 +89,48 @@ failureN x = do
   throwError "Not implemented!"
   return ()
 
+debugPrintState :: Result ()
+debugPrintState = do
+  penv <- gets env
+  pstore <- gets store
+  tell [(show penv) ++ (show pstore)]
+
 transMyIdent :: MyIdent -> Result String
 transMyIdent x = case x of
   MyIdent string -> do
     return string
 
--- TODO!!!!!!!!!
 transProgram :: Program -> Result ()
 transProgram x = case x of
-  Prog codes -> do
-    tell (["This program is totally being interpreted now, trust me"])
+  Prog (code:codes) -> do
+    debugPrintState
+    transCode code
+    transProgram (Prog codes)
+  Prog [] -> do
+    tell (["Finished interpreting program."])
     return ()
 
 -- TODO!!!!
-transCode :: Code -> Result Value
+transCode :: Code -> Result ()
 transCode x = case x of
-  FCode function -> failure x
-  SCode stm -> failure x
+  FCode function -> failureN x
+  SCode stm -> transStm stm
 
 -- TODO!!!!
 transFunction :: Function -> Result Value
 transFunction x = case x of
   Fun type_ myident decls stms -> failure x
 
--- TODO!!!!
 transDecl :: Decl -> Result ()
 transDecl x = case x of
   Dec type_ (firstident:myidents) -> do
     nval <- transType type_
     mid <- transMyIdent firstident
     idloc <- newLoc mid
+    addName mid idloc
+    tell (["New loc: " ++ (show idloc)])
     setVal idloc nval
+    debugPrintState
     transDecl (Dec type_ myidents)
   Dec type_ [] -> do
     return ()
@@ -130,7 +148,11 @@ transStm x = case x of
   SIf exp stm -> failureN x
   SIfElse exp stm1 stm2 -> failureN x
   SFor exp1 exp2 exp3 stm -> failureN x
-  SPrt exp -> failureN x
+  SPrt exp -> do
+    v <- transExp exp
+    case v of
+      ValInt xv -> tell [(show xv)]
+      ValGeorge bv -> tell [(show bv)]
 
 transExp :: Exp -> Result Value
 transExp x = case x of
