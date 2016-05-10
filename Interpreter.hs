@@ -37,7 +37,7 @@ emptyFEnv = Map.empty
 emptyMyState :: MyState
 emptyMyState = MyState {env = emptyEnv, store = emptyStore, fenv = emptyFEnv}
 
--- might have to change this for local variables
+
 newLoc :: Result Loc
 newLoc = do
   cenv <- gets env
@@ -51,12 +51,19 @@ addName x l = do
   cfenv <- gets fenv
   put (MyState (Map.insert x l cenv) cstore cfenv)
 
+getFunc :: Var -> Result Func
+getFunc x = do
+  cfenv <- gets fenv
+  case Map.lookup x cfenv of
+    Just f -> return f
+    Nothing -> throwError ("Function " ++ x ++ " undeclared")
+
 getLoc :: Var -> Result Loc
 getLoc x = do
   cenv <- gets env
   case Map.lookup x cenv of
     Just n -> return n
-    Nothing -> throwError (x ++ " undeclared")
+    Nothing -> throwError ("Variable " ++ x ++ " undeclared")
 
 getVal :: Loc -> Result Value
 getVal x = do
@@ -126,10 +133,19 @@ transCode x = case x of
   FCode function -> transFunction function
   SCode stm -> transStm stm
 
--- TODO!!!!
+-- why does it even have a type?
 transFunction :: Function -> Result ()
 transFunction x = case x of
-  Fun type_ myident decls stms -> failureN x
+  Fun type_ myident decls stms -> do
+    cfenv <- gets fenv
+    mid <- transMyIdent myident
+    case Map.lookup mid cfenv of
+      Just f -> throwError ("Function with name " ++ mid ++ " already declared")
+      Nothing -> do
+        cenv <- gets env
+        cstore <- gets store
+        put (MyState cenv cstore (Map.insert mid (Func decls stms) cfenv))
+        return ()
 
 transDecl :: Decl -> Result ()
 transDecl x = case x of
@@ -246,7 +262,10 @@ transExp x = case x of
     nval <- let ValInt xcval = cval in (setVal idloc (ValInt (xcval - 1)))
     return cval
   -- TODO (functions)!!!!!!!!!!
-  Call myident exps -> failure x
+  Call myident exps -> do
+    mid <- transMyIdent myident
+    f <- getFunc mid
+    return (ValInt 2)
   EVar myident -> do
     mid <- transMyIdent myident
     idloc <- getLoc mid
