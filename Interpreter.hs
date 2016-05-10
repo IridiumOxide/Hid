@@ -14,7 +14,7 @@ data Value = ValInt Integer | ValGeorge Bool deriving (Show, Eq, Ord)
 type Var = String
 type Loc = Integer
 
-data Func = Func [Decl] [Stm] deriving Show
+data Func = Func [Decl] [Stm] Value deriving Show
 
 type Env = Map.Map Var Loc
 type Store = Map.Map Loc Value
@@ -92,6 +92,9 @@ applyIntOperator exp1 exp2 f = do
   v2 <- transExp exp2
   return (ValInt (let {ValInt x1 = v1; ValInt x2 = v2} in f x1 x2))
 
+prepareState :: [Decl] -> [Exp] -> Result ()
+prepareState decls exps = return ()
+
 failure :: a -> Result Value
 failure x = do
   throwError "Not implemented!"
@@ -137,6 +140,7 @@ transCode x = case x of
 transFunction :: Function -> Result ()
 transFunction x = case x of
   Fun type_ myident decls stms -> do
+    defret <- transType type_
     cfenv <- gets fenv
     mid <- transMyIdent myident
     case Map.lookup mid cfenv of
@@ -144,7 +148,7 @@ transFunction x = case x of
       Nothing -> do
         cenv <- gets env
         cstore <- gets store
-        put (MyState cenv cstore (Map.insert mid (Func decls stms) cfenv))
+        put (MyState cenv cstore (Map.insert mid (Func decls stms defret) cfenv))
         return ()
 
 transDecl :: Decl -> Result ()
@@ -158,45 +162,55 @@ transDecl x = case x of
     debugPrintState
 
 transStm :: Stm -> Result ()
-transStm x = case x of
-  SDecl decl -> transDecl decl
-  SExp exp -> do
-    transExp exp
-    return ()
-  SBlock stms -> do
-    oldenv <- gets env
-    cfenv <- gets fenv
-    transStms stms
-    -- WE CAN STOP STORE OVERGROWTH BY JUST ASSIGNING VALUES TO EXISTING FIELDS IN OLD STORE!
-    cstore <- gets store
-    put (MyState oldenv cstore cfenv)
-  -- TODO: variables are not local if statements aren't in a block (single statement)
-  SWhile exp stm -> do
-    v <- transExp exp
-    let ValGeorge b = v in
-      if b then do
-        transStm stm
-        transStm (SWhile exp stm)
-      else
+transStm x = do
+  rstore <- gets store
+  case Map.lookup (-1) rstore of
+    Nothing -> case x of
+      SDecl decl -> transDecl decl
+      SExp exp -> do
+        transExp exp
         return ()
-  -- TODO (functions)!!!!
-  SReturn exp -> failureN x
-  SIf exp stm -> do
-    v <- transExp exp
-    let ValGeorge b = v in
-      if b then transStm stm else return ()
-  SIfElse exp stm1 stm2 -> do
-    v <- transExp exp
-    let ValGeorge b = v in
-      if b then transStm stm1 else transStm stm2
-  SFor exp1 exp2 exp3 stm -> do
-    transExp exp1
-    transStm (SWhile exp2 (SBlock [stm, (SExp exp3)]))
-  SPrt exp -> do
-    v <- transExp exp
-    case v of
-      ValInt xv -> tell [(show xv)]
-      ValGeorge bv -> tell [(show bv)]
+      SBlock stms -> do
+        oldenv <- gets env
+        cfenv <- gets fenv
+        transStms stms
+        -- WE CAN STOP STORE OVERGROWTH BY JUST ASSIGNING VALUES TO EXISTING FIELDS IN OLD STORE!
+        cstore <- gets store
+        put (MyState oldenv cstore cfenv)
+      -- TODO: variables are not local if statements aren't in a block (single statement)
+      SWhile exp stm -> do
+        v <- transExp exp
+        let ValGeorge b = v in
+          if b then do
+            transStm stm
+            transStm (SWhile exp stm)
+          else
+            return ()
+      -- return will set -1th variable in store to the return value.
+      -- statements will not be executed while it's set.
+      SReturn exp -> do
+        v <- transExp exp
+        cenv <- gets env
+        cfenv <- gets fenv
+        cstore <- gets store
+        put (MyState cenv (Map.insert (-1) v cstore) cfenv)
+      SIf exp stm -> do
+        v <- transExp exp
+        let ValGeorge b = v in
+          if b then transStm SBlock stm else return ()
+      SIfElse exp stm1 stm2 -> do
+        v <- transExp exp
+        let ValGeorge b = v in
+          if b then transStm stm1 else transStm stm2
+      SFor exp1 exp2 exp3 stm -> do
+        transExp exp1
+        transStm (SWhile exp2 (SBlock [stm, (SExp exp3)]))
+      SPrt exp -> do
+        v <- transExp exp
+        case v of
+          ValInt xv -> tell [(show xv)]
+          ValGeorge bv -> tell [(show bv)]
+    Just n -> return ()
 
 transExp :: Exp -> Result Value
 transExp x = case x of
@@ -261,11 +275,21 @@ transExp x = case x of
     cval <- getVal idloc
     nval <- let ValInt xcval = cval in (setVal idloc (ValInt (xcval - 1)))
     return cval
-  -- TODO (functions)!!!!!!!!!!
   Call myident exps -> do
     mid <- transMyIdent myident
     f <- getFunc mid
-    return (ValInt 2)
+    oldenv <- gets env
+    let Func decls stms defret = f in
+      if length decls < length exps then throwError ("Too many arguments in " ++ mid ++ " function call") else do
+        prepareState decls exps
+        transStm (SBlock stms)
+        cstore <- gets store
+        cfenv <- gets fenv
+        retval <- case Map.lookup (-1) cstore of
+          Just v -> return v
+          Nothing -> return defret
+        put (MyState oldenv (Map.delete (-1) cstore) cfenv)
+        return retval
   EVar myident -> do
     mid <- transMyIdent myident
     idloc <- getLoc mid
