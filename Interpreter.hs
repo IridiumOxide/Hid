@@ -94,7 +94,6 @@ applyIntOperator exp1 exp2 f = do
 
 prepareState :: [Decl] -> [Value] -> Result ()
 prepareState (fdecl:decls) (fval:vals) = do
-  tell [show fval]
   transDecl fdecl
   cenv <- gets env
   cstore <- gets store
@@ -160,6 +159,7 @@ transDecl x = case x of
     idloc <- newLoc
     addName mid idloc
     setVal idloc nval
+    return ()
     --debugPrintState
 
 transStm :: Stm -> Result ()
