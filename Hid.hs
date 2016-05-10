@@ -10,10 +10,17 @@ import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Writer
 import ErrM
+import System.Environment
 
 main = do
-  s <- getContents
-  putStrLn (interpret s)
+  args <- getArgs
+  case args of
+    [] -> do
+      s <- getContents
+      putStrLn (interpret s)
+    (x:xs) -> do
+      s <- readFile x
+      putStrLn (interpret s)
   return ()
 
 interpret :: String -> String
