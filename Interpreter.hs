@@ -5,7 +5,7 @@ module Interpreter where
 import AbsHid
 import ErrM
 import Control.Monad
-import Control.Monad.Except
+import Control.Monad.Error
 import Control.Monad.State
 import Control.Monad.Writer
 import qualified Data.Map as Map
@@ -21,7 +21,7 @@ type Store = Map.Map Loc Value
 type FEnv = Map.Map Var Func
 data MyState = MyState {env :: Env, store :: Store, fenv :: FEnv} deriving Show
 
-type MyMonad = ExceptT String (WriterT [String] (State MyState))
+type MyMonad = ErrorT String (WriterT [String] (State MyState))
 
 type Result = MyMonad
 
