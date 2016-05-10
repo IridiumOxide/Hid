@@ -119,9 +119,9 @@ transCode x = case x of
   SCode stm -> transStm stm
 
 -- TODO!!!!
-transFunction :: Function -> Result Value
+transFunction :: Function -> Result ()
 transFunction x = case x of
-  Fun type_ myident decls stms -> failure x
+  Fun type_ myident decls stms -> failureN x
 
 transDecl :: Decl -> Result ()
 transDecl x = case x of
@@ -201,6 +201,7 @@ transExp x = case x of
   ESub exp1 exp2 -> applyIntOperator exp1 exp2 (-)
   EMul exp1 exp2 -> applyIntOperator exp1 exp2 (*)
   EDiv exp1 exp2 -> applyIntOperator exp1 exp2 (div)
+  EMod exp1 exp2 -> applyIntOperator exp1 exp2 (rem)
   EInc exp -> do
     v <- transExp exp
     return (ValInt (let ValInt x = v in x + 1))
@@ -251,6 +252,7 @@ transArithAssignOp x = case x of
   AssignSubt -> return (-)
   AssignMult -> return (*)
   AssignDiv ->  return (div)
+  AssignMod -> return (rem)
 
 transType :: Type -> Result Value
 transType x = case x of

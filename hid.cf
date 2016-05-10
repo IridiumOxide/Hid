@@ -21,7 +21,7 @@ SReturn. Stm ::= "return" Exp  ";" ;
 SIf.     Stm ::= "if" "(" Exp ")" Stm ;
 SIfElse. Stm ::= "if" "(" Exp ")" Stm "else" Stm ;
 SFor.    Stm ::= "for" "(" Exp ";" Exp ";" Exp ")" Stm ;
-SPrt.    Stm ::= "print" "(" Exp ")" ";";
+SPrt.    Stm ::= "print" Exp ";";
 
 EAss.    Exp  ::= MyIdent "=" Exp ;
 EArAss.  Exp  ::= MyIdent ArithAssignOp Exp ;
@@ -35,6 +35,7 @@ EAdd.    Exp2 ::= Exp2 "+" Exp3 ;
 ESub.    Exp2 ::= Exp2 "-" Exp3 ;
 EMul.    Exp3 ::= Exp3 "*" Exp4 ;
 EDiv.    Exp3 ::= Exp3 "/" Exp4 ;
+EMod.    Exp3 ::= Exp3 "%" Exp4 ;
 EInc.    Exp4 ::= "^" Exp4 ;
 EDec.    Exp4 ::= "v" Exp4 ;
 EUmin.   Exp4 ::= "-" Exp4 ;
@@ -52,6 +53,7 @@ AssignAdd.    ArithAssignOp ::= "+=" ;
 AssignSubt.   ArithAssignOp ::= "-=" ;
 AssignMult.   ArithAssignOp ::= "*=" ;
 AssignDiv.    ArithAssignOp ::= "/=" ;
+AssignMod.    ArithAssignOp ::= "%=" ;
 
 TInt.    Type ::= "int" ;
 TBool.   Type ::= "bool" ;
