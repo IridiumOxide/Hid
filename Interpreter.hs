@@ -42,7 +42,7 @@ newLoc :: Result Loc
 newLoc = do
   cenv <- gets env
   cstore <- gets store
-  if null cstore then return 0 else return ((fst (Map.findMax cstore)) + 1)
+  if Map.null cstore then return 0 else return ((fst (Map.findMax cstore)) + 1)
 
 addName :: Var -> Loc -> Result ()
 addName x l = do
