@@ -1,3 +1,16 @@
+/* Functions for calculating n-th fibonacci number and n!.
+   Program should print:s
+   8
+   2
+   6
+   24
+   120
+   720
+*/
+
+
+// n    = 0 1 2 3 4 5
+// f(n) = 1 1 2 3 5 8
 int fibonacci (int x)
 {
   int 1;
@@ -11,27 +24,29 @@ int fibonacci (int x)
 }
 
 int 5;
-5 = ^ ^ ^ ^ ^ 5;
+5 = ^^^^^5;
 print(fibonacci(5));
 
 
+// n    = 1 2 3 4  5   6
+// f(n) = 1 2 6 24 120 720
 int factorial (int x)
 {
     int 1Variablewithnumberatthebeginning;
-    1Variablewithnumberatthebeginning = ^ 1Variablewithnumberatthebeginning;
+    1Variablewithnumberatthebeginning = ^1Variablewithnumberatthebeginning;
     int result;
     result = 1Variablewithnumberatthebeginning;
     while(x >= 1Variablewithnumberatthebeginning){
       result *= x;
-      x = v x;
+      x = vx;
     }
     return result;
 }
 
 int 6;
-6 = ^ ^ ^ ^ ^ ^ 6;
+6 = ^^^^^^6;
 int 2;
-2 = ^ ^ 2;
+2 = ^^2;
 int i;
 for(i = 2; i <= 6; ++i){
   print(factorial(i));

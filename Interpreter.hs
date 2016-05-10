@@ -175,7 +175,7 @@ transStm x = do
         oldenv <- gets env
         cfenv <- gets fenv
         transStms stms
-        -- WE CAN STOP STORE OVERGROWTH BY JUST ASSIGNING VALUES TO EXISTING FIELDS IN OLD STORE!
+        -- Garbage collector incoming in JUNE 2016
         cstore <- gets store
         put (MyState oldenv cstore cfenv)
       SWhile exp stm -> do
