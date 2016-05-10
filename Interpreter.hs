@@ -133,16 +133,13 @@ transFunction x = case x of
 
 transDecl :: Decl -> Result ()
 transDecl x = case x of
-  Dec type_ (firstident:myidents) -> do
+  Dec type_ myident -> do
     nval <- transType type_
-    mid <- transMyIdent firstident
+    mid <- transMyIdent myident
     idloc <- newLoc
     addName mid idloc
     setVal idloc nval
     debugPrintState
-    transDecl (Dec type_ myidents)
-  Dec type_ [] -> do
-    return ()
 
 transStm :: Stm -> Result ()
 transStm x = case x of

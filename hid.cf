@@ -5,7 +5,7 @@ Prog.   Program  ::= [Code] ;
 FCode.  Code     ::= Function ;
 SCode.  Code     ::= Stm ;
 Fun.    Function ::= Type MyIdent "(" [Decl] ")" "{" [Stm] "}" ;
-Dec.    Decl     ::= Type [MyIdent] ;
+Dec.    Decl     ::= Type MyIdent ;
 
 terminator Code "" ;
 terminator Stm "" ;
