@@ -130,7 +130,6 @@ transDecl x = case x of
     mid <- transMyIdent firstident
     idloc <- newLoc
     addName mid idloc
-    tell (["New loc: " ++ (show idloc)])
     setVal idloc nval
     debugPrintState
     transDecl (Dec type_ myidents)
