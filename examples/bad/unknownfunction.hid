@@ -1,0 +1,9 @@
+/* Program will end with an unknown function error */
+
+int do_things(int a){
+  a = ^^^a;
+  print a;
+}
+
+int a;
+do_other_things(a);

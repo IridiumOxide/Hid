@@ -1,0 +1,5 @@
+/* Program will end with an error caused by trying to add an integer and a bool together */
+
+int a;
+bool b;
+print (a + b);
