@@ -86,6 +86,12 @@ applyBoolOperator exp1 exp2 f = do
   v2 <- transExp exp2
   return (ValGeorge (f v1 v2))
 
+applyIntCmpOperator :: Exp -> Exp -> (Integer -> Integer -> Bool) -> Result Value
+applyIntCmpOperator exp1 exp2 f = do
+  v1 <- transExp exp1
+  v2 <- transExp exp2
+  return (ValGeorge (let {ValInt x1 = v1; ValInt x2 = v2} in f x1 x2))
+
 applyIntOperator :: Exp -> Exp -> (Integer -> Integer -> Integer) -> Result Value
 applyIntOperator exp1 exp2 f = do
   v1 <- transExp exp1
@@ -228,10 +234,10 @@ transExp x = case x of
     cval <- getVal idloc
     sv <- let {ValInt xcval = cval; ValInt xev = ev} in (let nval = (aop xcval xev) in setVal idloc (ValInt nval))
     return sv
-  ELt exp1 exp2 -> applyBoolOperator exp1 exp2 (<)
-  EGt exp1 exp2 -> applyBoolOperator exp1 exp2 (>)
-  ELe exp1 exp2 -> applyBoolOperator exp1 exp2 (<=)
-  EGe exp1 exp2 -> applyBoolOperator exp1 exp2 (>=)
+  ELt exp1 exp2 -> applyIntCmpOperator exp1 exp2 (<)
+  EGt exp1 exp2 -> applyIntCmpOperator exp1 exp2 (>)
+  ELe exp1 exp2 -> applyIntCmpOperator exp1 exp2 (<=)
+  EGe exp1 exp2 -> applyIntCmpOperator exp1 exp2 (>=)
   EEq exp1 exp2 -> applyBoolOperator exp1 exp2 (==)
   ENeq exp1 exp2 -> applyBoolOperator exp1 exp2 (/=)
   EAdd exp1 exp2 -> applyIntOperator exp1 exp2 (+)
