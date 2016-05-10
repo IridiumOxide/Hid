@@ -178,12 +178,11 @@ transStm x = do
         -- WE CAN STOP STORE OVERGROWTH BY JUST ASSIGNING VALUES TO EXISTING FIELDS IN OLD STORE!
         cstore <- gets store
         put (MyState oldenv cstore cfenv)
-      -- TODO: variables are not local if statements aren't in a block (single statement)
       SWhile exp stm -> do
         v <- transExp exp
         let ValGeorge b = v in
           if b then do
-            transStm stm
+            transStm (SBlock [stm])
             transStm (SWhile exp stm)
           else
             return ()
@@ -198,11 +197,11 @@ transStm x = do
       SIf exp stm -> do
         v <- transExp exp
         let ValGeorge b = v in
-          if b then transStm stm else return ()
+          if b then transStm (SBlock [stm]) else return ()
       SIfElse exp stm1 stm2 -> do
         v <- transExp exp
         let ValGeorge b = v in
-          if b then transStm stm1 else transStm stm2
+          if b then transStm (SBlock [stm1]) else transStm (SBlock [stm2])
       SFor exp1 exp2 exp3 stm -> do
         transExp exp1
         transStm (SWhile exp2 (SBlock [stm, (SExp exp3)]))
