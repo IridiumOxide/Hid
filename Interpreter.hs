@@ -31,14 +31,12 @@ emptyStore = Map.empty
 emptyMyState :: MyState
 emptyMyState = MyState {env = emptyEnv, store = emptyStore}
 
-
-newLoc :: Var -> Result Loc
-newLoc x = do
+-- might have to change this for local variables
+newLoc :: Result Loc
+newLoc = do
   cenv <- gets env
   cstore <- gets store
-  case Map.lookup x cenv of
-    Just n -> return n
-    Nothing -> if null cstore then return 0 else return ((fst (Map.findMax cstore)) + 1)
+  if null cstore then return 0 else return ((fst (Map.findMax cstore)) + 1)
 
 addName :: Var -> Loc -> Result ()
 addName x l = do
@@ -95,6 +93,12 @@ debugPrintState = do
   pstore <- gets store
   tell [(show penv) ++ (show pstore)]
 
+transStms :: [Stm] -> Result ()
+transStms (stm:stms) = do
+  transStm stm
+  transStms stms
+transStms [] = return ()
+
 transMyIdent :: MyIdent -> Result String
 transMyIdent x = case x of
   MyIdent string -> do
@@ -126,7 +130,7 @@ transDecl x = case x of
   Dec type_ (firstident:myidents) -> do
     nval <- transType type_
     mid <- transMyIdent firstident
-    idloc <- newLoc mid
+    idloc <- newLoc
     addName mid idloc
     tell (["New loc: " ++ (show idloc)])
     setVal idloc nval
@@ -142,8 +146,19 @@ transStm x = case x of
   SExp exp -> do
     transExp exp
     return ()
-  SBlock stms -> failureN x
-  SWhile exp stm -> failureN x
+  SBlock stms -> do
+    oldenv <- gets env
+    transStms stms
+    cstore <- gets store
+    put (MyState oldenv cstore)
+  SWhile exp stm -> do
+    v <- transExp exp
+    let ValGeorge b = v in
+      if b then do
+        transStm stm
+        transStm (SWhile exp stm)
+      else
+        return ()
   SReturn exp -> failureN x
   SIf exp stm -> failureN x
   SIfElse exp stm1 stm2 -> failureN x
