@@ -1,0 +1,12 @@
+/* Program will end with an error caused by trying to declare a second function with the same name */
+
+int 1234(int 321){
+  return ^321;
+}
+
+int 1234(int 123, int 231, int 2234){
+  return vvvvvvvvvvvvv223;
+}
+
+int a;
+print 1234(a);

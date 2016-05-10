@@ -1,5 +1,5 @@
 /* Program will end with an error caused by trying to add an integer and a bool together */
 
-int a;
+int 42;
 bool b;
-print (a + b);
+print (42 + b);
