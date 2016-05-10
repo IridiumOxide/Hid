@@ -92,18 +92,21 @@ applyIntOperator exp1 exp2 f = do
   v2 <- transExp exp2
   return (ValInt (let {ValInt x1 = v1; ValInt x2 = v2} in f x1 x2))
 
-prepareState :: [Decl] -> [Exp] -> Result ()
-prepareState decls exps = return ()
-
-failure :: a -> Result Value
-failure x = do
-  throwError "Not implemented!"
-  return (ValInt 0)
-
-failureN :: a -> Result ()
-failureN x = do
-  throwError "Not implemented!"
-  return ()
+prepareState :: [Decl] -> [Value] -> Result ()
+prepareState (fdecl:decls) (fval:vals) = do
+  tell [show fval]
+  transDecl fdecl
+  cenv <- gets env
+  cstore <- gets store
+  cfenv <- gets fenv
+  mid <- let Dec t myid = fdecl in transMyIdent myid
+  cloc <- getLoc mid
+  put (MyState cenv (Map.insert cloc fval cstore) cfenv)
+  prepareState decls vals
+prepareState (fdecl:decls) [] = do
+  transDecl fdecl
+  prepareState decls []
+prepareState [] [] = return ()
 
 debugPrintState :: Result ()
 debugPrintState = do
@@ -119,17 +122,15 @@ transStms [] = return ()
 
 transMyIdent :: MyIdent -> Result String
 transMyIdent x = case x of
-  MyIdent string -> do
-    return string
+  MyIdent string -> return string
 
 transProgram :: Program -> Result ()
 transProgram x = case x of
   Prog (code:codes) -> do
-    debugPrintState
+    --debugPrintState
     transCode code
     transProgram (Prog codes)
-  Prog [] -> do
-    return ()
+  Prog [] -> return ()
 
 transCode :: Code -> Result ()
 transCode x = case x of
@@ -159,7 +160,7 @@ transDecl x = case x of
     idloc <- newLoc
     addName mid idloc
     setVal idloc nval
-    debugPrintState
+    --debugPrintState
 
 transStm :: Stm -> Result ()
 transStm x = do
@@ -197,7 +198,7 @@ transStm x = do
       SIf exp stm -> do
         v <- transExp exp
         let ValGeorge b = v in
-          if b then transStm SBlock stm else return ()
+          if b then transStm stm else return ()
       SIfElse exp stm1 stm2 -> do
         v <- transExp exp
         let ValGeorge b = v in
@@ -281,7 +282,8 @@ transExp x = case x of
     oldenv <- gets env
     let Func decls stms defret = f in
       if length decls < length exps then throwError ("Too many arguments in " ++ mid ++ " function call") else do
-        prepareState decls exps
+        vals <- mapM transExp exps
+        prepareState decls vals
         transStm (SBlock stms)
         cstore <- gets store
         cfenv <- gets fenv
