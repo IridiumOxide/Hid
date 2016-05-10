@@ -306,7 +306,5 @@ transArithAssignOp x = case x of
 
 transType :: Type -> Result Value
 transType x = case x of
-  TInt -> do
-    return (ValInt 0)
-  TBool -> do
-    return (ValGeorge False)
+  TInt -> return (ValInt 0)
+  TBool -> return (ValGeorge False)
