@@ -111,13 +111,11 @@ transProgram x = case x of
     transCode code
     transProgram (Prog codes)
   Prog [] -> do
-    tell (["Finished interpreting program."])
     return ()
 
--- TODO!!!!
 transCode :: Code -> Result ()
 transCode x = case x of
-  FCode function -> failureN x
+  FCode function -> transFunction function
   SCode stm -> transStm stm
 
 -- TODO!!!!
@@ -139,7 +137,6 @@ transDecl x = case x of
   Dec type_ [] -> do
     return ()
 
--- TODO!!!!
 transStm :: Stm -> Result ()
 transStm x = case x of
   SDecl decl -> transDecl decl
@@ -159,10 +156,19 @@ transStm x = case x of
         transStm (SWhile exp stm)
       else
         return ()
+  -- TODO (functions)!!!!
   SReturn exp -> failureN x
-  SIf exp stm -> failureN x
-  SIfElse exp stm1 stm2 -> failureN x
-  SFor exp1 exp2 exp3 stm -> failureN x
+  SIf exp stm -> do
+    v <- transExp exp
+    let ValGeorge b = v in
+      if b then transStm stm else return ()
+  SIfElse exp stm1 stm2 -> do
+    v <- transExp exp
+    let ValGeorge b = v in
+      if b then transStm stm1 else transStm stm2
+  SFor exp1 exp2 exp3 stm -> do
+    transExp exp1
+    transStm (SWhile exp2 (SBlock [stm, (SExp exp3)]))
   SPrt exp -> do
     v <- transExp exp
     case v of
