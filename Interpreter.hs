@@ -14,9 +14,12 @@ data Value = ValInt Integer | ValGeorge Bool deriving (Show, Eq, Ord)
 type Var = String
 type Loc = Integer
 
+data Func = Func [Decl] [Stm] deriving Show
+
 type Env = Map.Map Var Loc
 type Store = Map.Map Loc Value
-data MyState = MyState {env :: Env, store :: Store} deriving Show
+type FEnv = Map.Map Var Func
+data MyState = MyState {env :: Env, store :: Store, fenv :: FEnv} deriving Show
 
 type MyMonad = ExceptT String (WriterT [String] (State MyState))
 
@@ -28,8 +31,11 @@ emptyEnv = Map.empty
 emptyStore :: Store
 emptyStore = Map.empty
 
+emptyFEnv :: FEnv
+emptyFEnv = Map.empty
+
 emptyMyState :: MyState
-emptyMyState = MyState {env = emptyEnv, store = emptyStore}
+emptyMyState = MyState {env = emptyEnv, store = emptyStore, fenv = emptyFEnv}
 
 -- might have to change this for local variables
 newLoc :: Result Loc
@@ -42,7 +48,8 @@ addName :: Var -> Loc -> Result ()
 addName x l = do
   cenv <- gets env
   cstore <- gets store
-  put (MyState (Map.insert x l cenv) cstore)
+  cfenv <- gets fenv
+  put (MyState (Map.insert x l cenv) cstore cfenv)
 
 getLoc :: Var -> Result Loc
 getLoc x = do
@@ -62,7 +69,8 @@ setVal :: Loc -> Value -> Result Value
 setVal x v = do
   cstore <- gets store
   cenv <- gets env
-  put (MyState cenv (Map.insert x v cstore))
+  cfenv <- gets fenv
+  put (MyState cenv (Map.insert x v cstore) cfenv)
   return v
 
 applyBoolOperator :: Exp -> Exp -> (Value -> Value -> Bool) -> Result Value
@@ -144,9 +152,12 @@ transStm x = case x of
     return ()
   SBlock stms -> do
     oldenv <- gets env
+    cfenv <- gets fenv
     transStms stms
+    -- WE CAN STOP STORE OVERGROWTH BY JUST ASSIGNING VALUES TO EXISTING FIELDS IN OLD STORE!
     cstore <- gets store
-    put (MyState oldenv cstore)
+    put (MyState oldenv cstore cfenv)
+  -- TODO: variables are not local if statements aren't in a block (single statement)
   SWhile exp stm -> do
     v <- transExp exp
     let ValGeorge b = v in
