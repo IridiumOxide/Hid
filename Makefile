@@ -1,4 +1,4 @@
 all:
-	ghc -o Interpreter Hid.hs
+	ghc -o interpreter Hid.hs
 clean:
-	rm Interpreter *.o *.hi
+	rm interpreter *.o *.hi
