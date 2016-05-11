@@ -1,0 +1,16 @@
+/* testfunction will return 0 if no return statement is reached.
+   its arguements will take the values of 0, 0 and false if not provided. */
+
+int testfunction(int a, int b, bool c){
+    if(a > b) return a + b;
+    if(c){
+        return c;
+    }
+}
+
+int 0;
+bool false;
+
+print testfunction();                  // the argument values: 0, 0, False. The result is False.
+print testfunction(^^^0);              // the argument values are 3, 0, False. The result is 3.
+print testfunction(vv0, 0, !false);    // the argument values are -2, 0, True. The result is True.

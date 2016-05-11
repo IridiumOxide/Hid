@@ -1,4 +1,4 @@
-HID LANGUAGE
+---------------------- HID LANGUAGE
 
 HID (short for 'Hidden' or 'Hideous') is an imperative programming language with C-like syntax that has no literal values. All integer variables are given value of 0 when declared. The language supports all standard arithmetic expressions (+, -, *, /, %), as well as successor operator ^(expression) and predecessor operator v(expression) whose value is equal to the expression's value respectively increased or decreased by one.
 
@@ -7,7 +7,7 @@ As there are no literals, all digits are treated the same as other characters, i
 Apart from integer values, the language recognizes booleans (they start as False upon declaration, and can be negated) and provides all standard comparison operators (<, >, <=, >=, !=, ==).
 
 
-DECLARATIONS
+---------------------- DECLARATIONS
 
 Declaration of variables can be done in the following way:
 
@@ -47,14 +47,14 @@ Similarly, the type can be int or bool and denotes the default return value (0 o
     print testfunction(0, 0, 0);           // Error! c is an integer, but if requires a boolean value.
 
 
-COMPARISON
+---------------------- COMPARISON
 
 Integer values can be compared using <, >, <=, >=, ==, != operators.
 Boolean values can be compared using ==, != operators.
 Integers can be compared with booleans using ==, != operators (== will always return False, != will always return True).
 
 
-ASSIGNMENT
+---------------------- ASSIGNMENT
 
 A variable can be assigned any value.
     
@@ -82,7 +82,7 @@ Moreover, there are {post,pre}{in,de}crementation operators available for intege
     print a--; // will print 1
 
 
-CONTROL STATEMENTS
+---------------------- CONTROL STATEMENTS
 
 The available control statements are if, if-else, while, for with C-like syntax. The condition expressions must have a boolean value, i.e.
 
@@ -95,3 +95,26 @@ The available control statements are if, if-else, while, for with C-like syntax.
     if(a < b){...}             // NOT OK
     for(a; a == b; ++a){...}   // OK
 
+
+---------------------- MULTIPLE DECLARATIONS
+
+Functions with the same name can only be declared once.
+
+int test_function(int a){...}
+int test_function(){...}        // Error! test_function already exists
+
+Variables can be redeclared and their value reset at will. A variable from a higher scope can be overshadowed by a local variable:
+    
+    bool a;
+    a = !!!a;
+    print a;       // True will be printed
+    int a;
+    print a;       // 0 will be printed
+    a = ^^^^^a;
+    print a;       // 5 will be printed
+    {
+        int a;
+        a = vvva;
+        print a;   // -3 will be printed
+    }
+    print a;       // 5 will be printed 

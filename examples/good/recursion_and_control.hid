@@ -1,5 +1,6 @@
-/* Functions for calculating n-th fibonacci number and n!.
-   Program should print:s
+/* This program shows recursive functions, while loop, for loop and if statements.
+   It contains functions for calculating n-th fibonacci number and factorial.
+   it should print:
    8
    2
    6
