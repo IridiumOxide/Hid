@@ -6,6 +6,7 @@ As there are no literals, all digits are treated the same as other characters, i
 
 Apart from integer values, the language recognizes booleans (they start as False upon declaration, and can be negated) and provides all standard comparison operators (<, >, <=, >=, !=, ==).
 
+
 DECLARATIONS
 
 Declaration of variables can be done in the following way:
@@ -43,4 +44,54 @@ Similarly, the type can be int or bool and denotes the default return value (0 o
     print testfunction(^^^0);              // the argument values are 3, 0, False. The result is 3.
     print testfunction(vv0, 0, !false);    // the argument values are -2, 0, True. The result is True.
     print testfunction(vv0, ^^0, 0, ^v0);  // Error! Too many arguments provided.
-    print testfunction(0, 0, 0);           // Error! if statement requires the expression to evaluate to a boolean value, and c is an integer.
+    print testfunction(0, 0, 0);           // Error! c is an integer, but if requires a boolean value.
+
+
+COMPARISON
+
+Integer values can be compared using <, >, <=, >=, ==, != operators.
+Boolean values can be compared using ==, != operators.
+Integers can be compared with booleans using ==, != operators (== will always return False, != will always return True).
+
+
+ASSIGNMENT
+
+A variable can be assigned any value.
+    
+    int a;
+    bool b;
+    a = !b;
+
+In the above example, variable a is assigned a value of True.
+
+For integer assignment, there are agumented assignment operators available (+=, -=, *=, /=, %=)
+
+    int a;
+    a = ^^^^^a;
+    int b;
+    b = ^^^b;
+    a += b;
+
+Int the above example, a is first assigned value of 5. Then, b is assigned value of 3. Finally, a is assigned value of 8.
+Moreover, there are {post,pre}{in,de}crementation operators available for integers (++, --).
+
+    int a;
+    print a++; // will print 0
+    print ++a; // will print 2
+    print --a; // will print 1
+    print a--; // will print 1
+
+
+CONTROL STATEMENTS
+
+The available control statements are if, if-else, while, for with C-like syntax. The condition expressions must have a boolean value, i.e.
+
+    int a;
+    bool b;
+
+    if(a == a){...}            // OK
+    while(a){...}              // NOT OK
+    if(b){...}                 // OK
+    if(a < b){...}             // NOT OK
+    for(a; a == b; ++a){...}   // OK
+
