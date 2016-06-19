@@ -24,8 +24,9 @@ main = do
   return ()
 
 interpret :: String -> String
-interpret s = let Ok e = pProgram (myLexer s) in
-  let ((eith,l),_) = runState (runWriterT (runErrorT (transProgram e))) emptyMyState in
+interpret s = case pProgram (myLexer s) of
+  Ok e -> let ((eith,l),_) = runState (runWriterT (runErrorT (transProgram e))) emptyMyState in
     (foldl (\acc x-> acc ++ "\n" ++ x) "" l) ++ case eith of
       Right () -> "\nProgram finished with no errors."
       Left s -> "\nProgram finished with some error:\n" ++ s
+  Bad s -> s
