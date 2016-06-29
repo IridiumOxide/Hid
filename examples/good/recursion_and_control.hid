@@ -12,9 +12,9 @@
 
 // n    = 0 1 2 3 4 5
 // f(n) = 1 1 2 3 5 8
-int fibonacci (int x)
+declare fibonacci (declare x)
 {
-  int 1;
+  declare 1;
   1 = ^1;
   if (x <= 1){
     return 1;
@@ -24,18 +24,18 @@ int fibonacci (int x)
   }
 }
 
-int 5;
+declare 5;
 5 = ^^^^^5;
 print(fibonacci(5));
 
 
 // n    = 1 2 3 4  5   6
 // f(n) = 1 2 6 24 120 720
-int factorial (int x)
+declare factorial (declare x)
 {
-    int 1Variablewithnumberatthebeginning;
+    declare 1Variablewithnumberatthebeginning;
     1Variablewithnumberatthebeginning = ^1Variablewithnumberatthebeginning;
-    int result;
+    declare result;
     result = 1Variablewithnumberatthebeginning;
     while(x >= 1Variablewithnumberatthebeginning){
       result *= x;
@@ -44,11 +44,11 @@ int factorial (int x)
     return result;
 }
 
-int 6;
+declare 6;
 6 = ^^^^^^6;
-int 2;
+declare 2;
 2 = ^^2;
-int i;
+declare i;
 for(i = 2; i <= 6; ++i){
   print(factorial(i));
 }

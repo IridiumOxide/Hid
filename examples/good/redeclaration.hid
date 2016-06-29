@@ -1,14 +1,14 @@
 /* Variables can be redeclared in the same scope, or overshadowed in inner scope. */
 
-bool a;
+declare a;
 a = !!!a;
 print a;       // True will be printed
-int a;
+declare a;
 print a;       // 0 will be printed
 a = ^^^^^a;
 print a;       // 5 will be printed
 {
-    int a;
+    declare a;
     a = vvva;
     print a;   // -3 will be printed
 }

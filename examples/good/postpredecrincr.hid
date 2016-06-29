@@ -1,7 +1,7 @@
 /* Shows possible uses of post/pre in/de crementation operators.
    Values printed will be 0, 2, 1, 1.                               */
 
-int a;
+declare a;
 print a++;
 print ++a;
 print --a;

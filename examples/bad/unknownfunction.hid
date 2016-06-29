@@ -1,9 +1,9 @@
 /* Program will end with an unknown function error */
 
-int do_things(int a){
+declare do_things(declare a){
   a = ^^^a;
   print a;
 }
 
-int a;
+declare a;
 do_other_things(a);

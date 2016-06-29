@@ -10,16 +10,15 @@ import Control.Monad.State
 import Control.Monad.Writer
 import qualified Data.Map as Map
 
-data Value = ValInt Integer | ValGeorge Bool deriving (Show, Eq, Ord)
+data Value = ValInt Integer | ValGeorge Bool | ValFun Func deriving Show
 type Var = String
 type Loc = Integer
 
-data Func = Func [Decl] [Stm] Value deriving Show
+data Func = Func [Decl] [Stm] Env deriving Show
 
 type Env = Map.Map Var Loc
 type Store = Map.Map Loc Value
-type FEnv = Map.Map Var Func
-data MyState = MyState {env :: Env, store :: Store, fenv :: FEnv} deriving Show
+data MyState = MyState {env :: Env, store :: Store} deriving Show
 
 type MyMonad = ErrorT String (WriterT [String] (State MyState))
 
@@ -31,12 +30,26 @@ emptyEnv = Map.empty
 emptyStore :: Store
 emptyStore = Map.empty
 
-emptyFEnv :: FEnv
-emptyFEnv = Map.empty
-
 emptyMyState :: MyState
-emptyMyState = MyState {env = emptyEnv, store = emptyStore, fenv = emptyFEnv}
+emptyMyState = MyState {env = emptyEnv, store = emptyStore}
 
+toIntVal :: Value -> Result Value
+toIntVal value = case value of
+  ValInt v -> return (ValInt v)
+  ValGeorge b -> if b then return (ValInt 1) else return (ValInt 0)
+  ValFun f -> throwError("Can't convert functions to integers")
+
+toGeorgeVal :: Value -> Result Value
+toGeorgeVal value = case value of
+  ValInt v -> if v == 0 then do return (ValGeorge False) else return (ValGeorge True)
+  ValGeorge b -> return (ValGeorge b)
+  ValFun f -> throwError("Can't convert functions to booleans")
+
+toFunctionVal :: Value -> Result Value
+toFunctionVal value = case value of
+  ValInt v -> throwError("Can't use integers as functions")
+  ValGeorge b -> throwError("Can't use booleans as functions")
+  ValFun f -> return (ValFun f)
 
 newLoc :: Result Loc
 newLoc = do
@@ -48,22 +61,14 @@ addName :: Var -> Loc -> Result ()
 addName x l = do
   cenv <- gets env
   cstore <- gets store
-  cfenv <- gets fenv
-  put (MyState (Map.insert x l cenv) cstore cfenv)
-
-getFunc :: Var -> Result Func
-getFunc x = do
-  cfenv <- gets fenv
-  case Map.lookup x cfenv of
-    Just f -> return f
-    Nothing -> throwError ("Function " ++ x ++ " undeclared")
+  put (MyState (Map.insert x l cenv) cstore)
 
 getLoc :: Var -> Result Loc
 getLoc x = do
   cenv <- gets env
   case Map.lookup x cenv of
     Just n -> return n
-    Nothing -> throwError ("Variable " ++ x ++ " undeclared")
+    Nothing -> throwError ("Name " ++ x ++ " undeclared")
 
 getVal :: Loc -> Result Value
 getVal x = do
@@ -76,37 +81,42 @@ setVal :: Loc -> Value -> Result Value
 setVal x v = do
   cstore <- gets store
   cenv <- gets env
-  cfenv <- gets fenv
-  put (MyState cenv (Map.insert x v cstore) cfenv)
+  put (MyState cenv (Map.insert x v cstore))
   return v
 
-applyBoolOperator :: Exp -> Exp -> (Value -> Value -> Bool) -> Result Value
+-- converts booleans to integers, so (2 == true) is false
+applyBoolOperator :: Exp -> Exp -> (Integer -> Integer -> Bool) -> Result Value
 applyBoolOperator exp1 exp2 f = do
   v1 <- transExp exp1
   v2 <- transExp exp2
-  return (ValGeorge (f v1 v2))
+  ValInt iv1 <- toIntVal v1
+  ValInt iv2 <- toIntVal v2
+  return (ValGeorge (f iv1 iv2))
 
 applyIntCmpOperator :: Exp -> Exp -> (Integer -> Integer -> Bool) -> Result Value
 applyIntCmpOperator exp1 exp2 f = do
   v1 <- transExp exp1
   v2 <- transExp exp2
-  return (ValGeorge (let {ValInt x1 = v1; ValInt x2 = v2} in f x1 x2))
+  ValInt iv1 <- toIntVal v1
+  ValInt iv2 <- toIntVal v2
+  return (ValGeorge (f iv1 iv2))
 
 applyIntOperator :: Exp -> Exp -> (Integer -> Integer -> Integer) -> Result Value
 applyIntOperator exp1 exp2 f = do
   v1 <- transExp exp1
   v2 <- transExp exp2
-  return (ValInt (let {ValInt x1 = v1; ValInt x2 = v2} in f x1 x2))
+  ValInt iv1 <- toIntVal v1
+  ValInt iv2 <- toIntVal v2
+  return (ValInt (f iv1 iv2))
 
 prepareState :: [Decl] -> [Value] -> Result ()
 prepareState (fdecl:decls) (fval:vals) = do
   transDecl fdecl
   cenv <- gets env
   cstore <- gets store
-  cfenv <- gets fenv
-  mid <- let Dec t myid = fdecl in transMyIdent myid
+  mid <- let Dec myid = fdecl in transMyIdent myid
   cloc <- getLoc mid
-  put (MyState cenv (Map.insert cloc fval cstore) cfenv)
+  put (MyState cenv (Map.insert cloc fval cstore))
   prepareState decls vals
 prepareState (fdecl:decls) [] = do
   transDecl fdecl
@@ -131,40 +141,29 @@ transMyIdent x = case x of
 
 transProgram :: Program -> Result ()
 transProgram x = case x of
-  Prog (code:codes) -> do
+  SCode (stm:stms) -> do
     --debugPrintState
-    transCode code
-    transProgram (Prog codes)
-  Prog [] -> return ()
+    transStm stm
+    transProgram (SCode stms)
+  SCode [] -> return ()
 
-transCode :: Code -> Result ()
-transCode x = case x of
-  FCode function -> transFunction function
-  SCode stm -> transStm stm
-
--- why does it even have a type?
 transFunction :: Function -> Result ()
 transFunction x = case x of
-  Fun type_ myident decls stms -> do
-    defret <- transType type_
-    cfenv <- gets fenv
-    mid <- transMyIdent myident
-    case Map.lookup mid cfenv of
-      Just f -> throwError ("Function with name " ++ mid ++ " already declared")
-      Nothing -> do
-        cenv <- gets env
-        cstore <- gets store
-        put (MyState cenv cstore (Map.insert mid (Func decls stms defret) cfenv))
-        return ()
-
-transDecl :: Decl -> Result ()
-transDecl x = case x of
-  Dec type_ myident -> do
-    nval <- transType type_
+  Fun myident decls stms -> do
     mid <- transMyIdent myident
     idloc <- newLoc
     addName mid idloc
-    setVal idloc nval
+    cenv <- gets env
+    setVal idloc (ValFun (Func decls stms cenv))
+    return ()
+
+transDecl :: Decl -> Result ()
+transDecl x = case x of
+  Dec myident -> do
+    mid <- transMyIdent myident
+    idloc <- newLoc
+    addName mid idloc
+    setVal idloc (ValInt 0)
     return ()
     --debugPrintState
 
@@ -173,41 +172,40 @@ transStm x = do
   rstore <- gets store
   case Map.lookup (-1) rstore of
     Nothing -> case x of
+      SFun function -> transFunction function
       SDecl decl -> transDecl decl
       SExp exp -> do
         transExp exp
         return ()
       SBlock stms -> do
         oldenv <- gets env
-        cfenv <- gets fenv
         transStms stms
-        -- Garbage collector incoming in JUNE 2016
+        -- Garbage collector incoming in JUNE ̶2̶0̶1̶6̶  2018
         cstore <- gets store
-        put (MyState oldenv cstore cfenv)
+        put (MyState oldenv cstore)
       SWhile exp stm -> do
         v <- transExp exp
-        let ValGeorge b = v in
-          if b then do
-            transStm (SBlock [stm])
-            transStm (SWhile exp stm)
-          else
-            return ()
+        ValGeorge b <- toGeorgeVal v
+        if b then do
+          transStm (SBlock [stm])
+          transStm (SWhile exp stm)
+        else
+          return ()
       -- return will set -1th variable in store to the return value.
       -- statements will not be executed while it's set.
       SReturn exp -> do
         v <- transExp exp
         cenv <- gets env
-        cfenv <- gets fenv
         cstore <- gets store
-        put (MyState cenv (Map.insert (-1) v cstore) cfenv)
+        put (MyState cenv (Map.insert (-1) v cstore))
       SIf exp stm -> do
         v <- transExp exp
-        let ValGeorge b = v in
-          if b then transStm (SBlock [stm]) else return ()
+        ValGeorge b <- toGeorgeVal v
+        if b then transStm (SBlock [stm]) else return ()
       SIfElse exp stm1 stm2 -> do
         v <- transExp exp
-        let ValGeorge b = v in
-          if b then transStm (SBlock [stm1]) else transStm (SBlock [stm2])
+        ValGeorge b <- toGeorgeVal v
+        if b then transStm (SBlock [stm1]) else transStm (SBlock [stm2])
       SFor exp1 exp2 exp3 stm -> do
         transExp exp1
         transStm (SWhile exp2 (SBlock [stm, (SExp exp3)]))
@@ -216,6 +214,7 @@ transStm x = do
         case v of
           ValInt xv -> tell [(show xv)]
           ValGeorge bv -> tell [(show bv)]
+          ValFun fv -> tell [(show fv)]
     Just n -> return ()
 
 transExp :: Exp -> Result Value
@@ -232,7 +231,9 @@ transExp x = case x of
     ev <- transExp exp
     aop <- transArithAssignOp arithassignop
     cval <- getVal idloc
-    sv <- let {ValInt xcval = cval; ValInt xev = ev} in (let nval = (aop xcval xev) in setVal idloc (ValInt nval))
+    ValInt icval <- toIntVal cval
+    ValInt iev <- toIntVal ev
+    sv <- let nval = (aop icval iev) in setVal idloc (ValInt nval)
     return sv
   ELt exp1 exp2 -> applyIntCmpOperator exp1 exp2 (<)
   EGt exp1 exp2 -> applyIntCmpOperator exp1 exp2 (>)
@@ -247,56 +248,69 @@ transExp x = case x of
   EMod exp1 exp2 -> applyIntOperator exp1 exp2 (rem)
   EInc exp -> do
     v <- transExp exp
-    return (ValInt (let ValInt x = v in x + 1))
+    ValInt iv <- toIntVal v
+    return (ValInt (iv + 1))
   EDec exp -> do
     v <- transExp exp
-    return (ValInt (let ValInt x = v in x - 1))
+    ValInt iv <- toIntVal v
+    return (ValInt (iv - 1))
   EUmin exp -> do
     v <- transExp exp
-    return (ValInt (let ValInt x = v in -x))
+    ValInt iv <- toIntVal v
+    return (ValInt (-iv))
   ENeg exp -> do
     v <- transExp exp
-    return (ValGeorge (let ValGeorge b = v in not b))
+    ValGeorge b <- toGeorgeVal v
+    return (ValGeorge (not b))
   EPreIn myident -> do
     mid <- transMyIdent myident
     idloc <- getLoc mid
     cval <- getVal idloc
-    nval <- let ValInt xcval = cval in (setVal idloc (ValInt (xcval + 1)))
+    ValInt icval <- toIntVal cval
+    nval <- setVal idloc (ValInt (icval + 1))
     return nval
   EPreDe myident -> do
     mid <- transMyIdent myident
     idloc <- getLoc mid
     cval <- getVal idloc
-    nval <- let ValInt xcval = cval in (setVal idloc (ValInt (xcval - 1)))
+    ValInt icval <- toIntVal cval
+    nval <- setVal idloc (ValInt (icval - 1))
     return nval
   EPstIn myident -> do
     mid <- transMyIdent myident
     idloc <- getLoc mid
     cval <- getVal idloc
-    nval <- let ValInt xcval = cval in (setVal idloc (ValInt (xcval + 1)))
+    ValInt icval <- toIntVal cval
+    nval <- setVal idloc (ValInt (icval + 1))
     return cval
   EPstDe myident -> do
     mid <- transMyIdent myident
     idloc <- getLoc mid
     cval <- getVal idloc
-    nval <- let ValInt xcval = cval in (setVal idloc (ValInt (xcval - 1)))
+    ValInt icval <- toIntVal cval
+    nval <- setVal idloc (ValInt (icval - 1))
     return cval
   Call myident exps -> do
     mid <- transMyIdent myident
-    f <- getFunc mid
+    idloc <- getLoc mid
+    mf <- getVal idloc
+    ValFun (Func decls stms fenv) <- toFunctionVal mf
     oldenv <- gets env
-    let Func decls stms defret = f in
-      if length decls < length exps then throwError ("Too many arguments in " ++ mid ++ " function call") else do
-        vals <- mapM transExp exps
-        prepareState decls vals
-        transStm (SBlock stms)
-        cstore <- gets store
-        cfenv <- gets fenv
-        retval <- case Map.lookup (-1) cstore of
-          Just v -> return v
-          Nothing -> return defret
-        put (MyState oldenv (Map.delete (-1) cstore) cfenv)
-        return retval
+    if length decls < length exps then throwError ("Too many arguments in " ++ mid ++ " function call") else do
+      vals <- mapM transExp exps
+      bstore <- gets store
+      put (MyState fenv bstore)
+      prepareState decls vals
+      transStm (SBlock stms)
+      cstore <- gets store
+      retval <- case Map.lookup (-1) cstore of
+        Just v -> return v
+        Nothing -> return (ValInt 0)
+      put (MyState oldenv (Map.delete (-1) cstore))
+      return retval
+  ELambda decls stms -> do
+    cenv <- gets env
+    return (ValFun (Func decls stms cenv))
   EVar myident -> do
     mid <- transMyIdent myident
     idloc <- getLoc mid
@@ -310,8 +324,3 @@ transArithAssignOp x = case x of
   AssignMult -> return (*)
   AssignDiv ->  return (div)
   AssignMod -> return (rem)
-
-transType :: Type -> Result Value
-transType x = case x of
-  TInt -> return (ValInt 0)
-  TBool -> return (ValGeorge False)

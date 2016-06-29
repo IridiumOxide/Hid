@@ -1,11 +1,11 @@
 /* Program will end with an error caused by trying to pass too many arguments to a function */
 
-int 2plus(int a){
-  int 2;
+declare 2plus(declare a){
+  declare 2;
   2 = ^^2;
   return 2 + a;
 }
 
-int 3;
+declare 3;
 3 = ^^^3;
 print 2plus(3, 3);

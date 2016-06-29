@@ -1,6 +1,6 @@
 /* Program will end with an error caused by trying to divide something by 0 */
 
-int a;
-int b;
+declare a;
+declare b;
 b = ^^a;
 print (b/a);

@@ -8,20 +8,18 @@ module AbsHid where
 
 
 newtype MyIdent = MyIdent String deriving (Eq, Ord, Show, Read)
-data Program = Prog [Code]
+data Program = SCode [Stm]
   deriving (Eq, Ord, Show, Read)
 
-data Code = FCode Function | SCode Stm
+data Function = Fun MyIdent [Decl] [Stm]
   deriving (Eq, Ord, Show, Read)
 
-data Function = Fun Type MyIdent [Decl] [Stm]
-  deriving (Eq, Ord, Show, Read)
-
-data Decl = Dec Type MyIdent
+data Decl = Dec MyIdent
   deriving (Eq, Ord, Show, Read)
 
 data Stm
-    = SDecl Decl
+    = SFun Function
+    | SDecl Decl
     | SExp Exp
     | SBlock [Stm]
     | SWhile Exp Stm
@@ -55,13 +53,11 @@ data Exp
     | EPstIn MyIdent
     | EPstDe MyIdent
     | Call MyIdent [Exp]
+    | ELambda [Decl] [Stm]
     | EVar MyIdent
   deriving (Eq, Ord, Show, Read)
 
 data ArithAssignOp
     = AssignAdd | AssignSubt | AssignMult | AssignDiv | AssignMod
-  deriving (Eq, Ord, Show, Read)
-
-data Type = TInt | TBool
   deriving (Eq, Ord, Show, Read)
 
